@@ -6,58 +6,51 @@ var   HTTP = require("http"),
 
 (function(){
 
-  var   PORT_NUM = 28888,
-        CONTENT_TYPE = "application/json",
-        DATA = {};
+  var PORT_NUM = 28888,
+      CONTENT_TYPE = "application/json",
+      DATA = {};
 
+  //
   // data object representing response data
+  //
   var ResponseData = function(status,message) {
     this.status = status;
     this.msg = message;
   }
 
 
+  //
   // data object representing request data parsed out
   // into the fields needed by the service
+  //
   var ParsedRequest = function(request,chunkedData) {
-    var parts = request.url.split('/'),
-        newUrlParts = parts.slice(2),
-        workingUrl = '/'+newUrlParts.join('/'),
-        newMethod = request.method,
-        parsedUrl = URL.parse(request.url,false),
-        requestData = chunkedData;
 
-    this.originalRequest = request;
+    var parsedUrl = URL.parse(request.url,true),
+        parts = parsedUrl.path.split('/').slice(1);
+
     this.requestMethod = request.method;
     this.requestData = chunkedData;
-
-    //TODO: update these values in the switch below
-    this.parsedUrl = URL.parse(request.url,true);
-    this.parts = this.parsedUrl.path.split('/').slice(1);
-    this.resourceName = this.parts[0];
-    this.resourceId = this.parts[1];
+    this.resourceName = parts[0];
+    this.resourceId = parts[1];
 
     // logic for overriding REST method in the URL
     // to allow for hitting different methods in
     // a browsers address bar.
     if (request.url.indexOf('/_REST') === 0) {
-      switch(parts[1]){
-        case '_REST_POST': 
-          this.requestMethod = 'POST';
-          this.requestData = parsedUrl.query;
-          break;
-        case '_REST_PUT': 
-          this.requestMehod = 'PUT'; 
-          this.requestData = parsedUrl.query;
-          break;
-        case '_REST_DELETE': 
-          this.requestMethod = 'DELETE'; 
-          this.requestData = parsedUrl.query;
-          break;
-        default:
-          throw new Exception("unrecognized method override");
-          break;
+      switch(parts[0]) {
+        case '_REST_POST': this.requestMethod = 'POST'; break;
+        case '_REST_PUT':  this.requestMethod = 'PUT';  break;
+        case '_REST_DELETE': this.requestMethod = 'DELETE'; break;
+        default: throw new Exception("unrecognized method override"); break;
       }
+
+      var workingUrl = '/'+ request.url.split('/').slice(2).join('/'),
+          workingParsedUrl = URL.parse(workingUrl,false),
+          workingParts = workingParsedUrl.pathname.split('/').slice(1);
+
+      this.requestData = workingParsedUrl.query;
+      this.resourceName = workingParts[0];
+      this.resourceId = workingParts[1];
     }
   }
 
@@ -94,11 +87,12 @@ var   HTTP = require("http"),
   //
   // application logic for POST requests
   //
-  function handle_post(parsedRequest,data) {
+  function handle_post(parsedRequest) {
     // requests w/o an id specified are considered
     // create requests. requests w/ an id are
     // considered update requests.
 
+    var data = parsedRequest.requestData;
     var resourceName = parsedRequest.resourceName, 
         resourceId = parsedRequest.resourceId; 
         rcd = null,
@@ -130,7 +124,6 @@ var   HTTP = require("http"),
     rcd = _.extend(DATA[resourceName][resourceId],{id:resourceId},parsedData.query);
     DATA[resourceName][resourceId] = rcd;
 
-    // TODO: store id w/ the data, not just as the lookup key
     // TODO: write data record to the file system.
 
     return new ResponseData(201,JSON.stringify(rcd));
@@ -189,16 +182,16 @@ var   HTTP = require("http"),
 
     // attach to the 'end' event to handle the request
     request.on('end',function() {
-      var parsedRequest = new ParsedRequest(request,chunkedData);
-      var method = request.method,
+      var parsedRequest = new ParsedRequest(request,chunkedData),
+          method = parsedRequest.requestMethod,
           msg = "",
           statusCode = 200,
           res = {};
 
       switch (method) {
         case 'GET'    : res = handle_get(parsedRequest); break;
-        case 'POST'   : res = handle_post(parsedRequest,chunkedData); break;
-        case 'PUT'    : res = handle_put(parsedRequest,chunkedData); break;
+        case 'POST'   : res = handle_post(parsedRequest); break;
+        case 'PUT'    : res = handle_put(parsedRequest); break;
         case 'DELETE' : res = handle_delete(parsedRequest); break;
         default:
           res.msg = 'Unsupported request type: '+method;
