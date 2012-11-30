@@ -30,9 +30,11 @@
       - optional GET syntax to access POST, PUT, DELETE methods for convenience (i.e. 
         allows using the browser address bar)
 
-      Things I'd like to add:
+      Things I'd like to add at some point:
       - support JSONP
-      - persist DATA to disk 
+      - persist DATA to disk
+      - option to request a range and/or set of records
+
 
     API documentation
     =================
@@ -58,8 +60,6 @@
         Object data.  When the optional request type override is being used, the
         service will treat the GET parameters as request data
 
-
-
     Methods:
       - GET /resource_name
 
@@ -67,8 +67,6 @@
         200 - return all records of the specified resource type
         404 - if the specified resource type does not exist (e.g. 
               hasn't been created yet).
-
-        TODO: range and/or set parameters
 
       - GET /resource_name/:id
 
@@ -106,5 +104,5 @@
         delete the specified resource record
 
         response:
-        204 - record deleted sucessfully (w/ no message body in response)
+        200 - record deleted sucessfully (w/ delete success message for now)
         404 - specified resource record not found
