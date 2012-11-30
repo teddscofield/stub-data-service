@@ -1,0 +1,18 @@
+{
+  "name": "stub-data-service",
+  "description": "A RESTful stub data service",
+  "version": "0.0.1",
+  "author": {
+    "name": "Tedd Scofield",
+    "email": "teddscofield@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/teddscofield/stub-data-service.git"
+  },
+	"dependencies": {
+	  "underscore": ">= 1.4.2",
+	  "winston": ">= 0.6.2"
+	},
+  "readmeFilename": "README.md",
+}
