@@ -165,6 +165,11 @@ var   HTTP = require("http"),
     if (resourceId && !DATA[resourceName][resourceId]) {
       return new ResponseData(404,"no data found for "+resourceName+" "+resourceId);
     };
+
+    delete DATA[resourceName][resourceId];
+
+    return new ResponseData(200,"Successfully deleted "+resourceName+" "+resourceId);
+    // TODO: figure out the best way to send a status response w/o a response body.
   };
 
   //
